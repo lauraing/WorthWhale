@@ -1,2 +1,116 @@
 # WorthWhale
+
 WorthWhale master's thesis group project at the Bren School of Environmental Science &amp; Management.
+
+
+## WorthWhale folder content organization
+
+This folder contains all content related to the WorthWhale group project that will be published to the UCSB library database, and any support files used to generate it.
+
+- `README.md`: this file
+- `Library_Folder/`: content to be published to the UCSB library database 
+  - `Data/`: data sources for worthwhale project
+    - `Economic_Valuation/`: content for the economic analysis   
+      - `Survey/`: files related to survey
+    - `Marine_Spatial_Plan/`: content for the marine spatial plan   
+      - `AIS/`: AIS data     
+        - `2018_Categories_Visualization/`: content for vessel categories visualizations for 2018    
+          - `Cruiseship2018/`: content for cruise ship AIS data in 2018       
+          - `Ferries2018/`: content for high speed ferry AIS data in 2018
+          - `Merchant2018/`: content for merchant vessel AIS data in 2018
+          - `category_map_2018_FR.mxd`: ArcGIS map of the 3 different vessel categories in 2018    
+        - `RawData/`: original AIS data provided by the Dominica Sperm Whale Project
+        - `SQLite/`: SQLite database
+        - `Vessel_Density_Analysis_FR/`: density analysis content; source files and other data used to generate vessel density
+      - `ArcGIS_maps/`: content for ArcGIS; source files and other data used to create final maps
+        - `DMA_water_areas/`: source files for Dominica's EEZ
+        - `Finalmaps_MXD/`: MXD files used for creating maps in the final report
+        - `Fv/`: fast vessels shapefile
+        - `Inland_lane/`: shapefile for inland lane
+        - `Marinespatialplan/`: files used to create the vessel recommendation map
+        - `NorthSouthDivide/`: files used to create the divide of northbound and southbound lanes
+        - `Offshoredivide/`: files used to create the divide of the offshore lanes
+        - `Offshorelane/`: files used to create the offshore lanes
+        - `Slow_speed_zone/`: files used to create the slow speed zone
+        - `Slowspeedzone/`: files used to create the slow speed zone
+        - `Spz_84/`: files used to create the slow speed zone in WGS 84
+      - `Maxent/`: all the inputs and outputs of the Species Distribution Model
+        - `Inputs`/: folders of different environmental variables used in the Maxent run
+          - `Chlorophyll/`: TiFF of maximum, mean, and range values of chlorophyll data
+            - `Benthic/`: source files for benthic chlorophyll data
+            - `Surface/`: source files for surface chlorophyll data
+          - `Dominica/`: mask of Dominica
+          - `Phytoplankton/`: TiFF of maximum, mean, and range values of surface phytoplankton
+            - `Benthic/`: source files for benthic phytoplankton data
+            - `Surface/`: source files for surface phytoplankton data
+          - `Primary_Productivity/`: TiFF of maximum, mean, and range values of primary productivity data
+            - `Benthic/`: source files for benthic primary productivity data
+            - `Surface/`: source files for surface primary productivity data
+          - `Salinity/`: TiFF of maximum, mean, and range values of salinity data
+            - `Benthic/`: source files for benthic salinity data
+            - `Surface/`: source files for surface salinity data
+          - `Temperature/`: TiFF of maximum, mean, range of temperature data
+            - `Benthic/`: source files for benthic temperature data
+            - `Surface/`: source files for surface temperature data
+        - `Maxent_run_max/`: outputs from maximum choices of inputs for Maxent run
+          - `Plots/`: ASCII outputs from the MaxEnt run using maximum values
+          - `Screenshots/`: PNG of MaxEnt interface of inputs
+        - `Maxent_run_mean/`: outputs from mean choices of inputs for MaxEnt run
+          - `Plots/`: ASCII outputs from the MaxEnt run using mean values
+          - `Screenshots/`: PNG of MaxEnt interface of inputs
+        - `Outputs/`: PNG of different MaxEnt run outputs and models used in final report appendix
+          - `AppendixImages/`: PNG used in the hotspot analysis appendix 
+          - `FinalMaps/`: PNG of final hotspot analysis maps
+      - `ShinyApp/`: files used to create ShinyApp
+        - `Shapefiles/`: folder that holds shapefiles used in map creation
+        - `www/`: folder that holds images used in the app
+      - `VesselTrafficRecommendations/`: R project with the vessel time cost analysis code and output
+        - `Data/`: shapefile of vessel speed reduction zone
+      - `WhaleSightings_Vessel_Match/`: files used to match pictures of whale sightings with vessel tracks
+        - `RawData/`: folder that holds raw data for whale sightings and vessel tracks
+          - `Vessel_Tracks/`: data for vessel tracks
+            - `2007/`: gpx files of vessel tracks for 2007
+            - `2008/`: gpx files of vessel tracks for 2008
+            - `2009/`: gpx files of vessel tracks for 2009 
+            - `2010/`: gpx files of vessel tracks for 2010
+            - `2011/`: gpx files of vessel tracks for 2011
+            - `2012/`: gpx files of vessel tracks for 2012
+            - `2014/`: gpx files of vessel tracks for 2014
+            - `2015/`: gpx files of vessel tracks for 2015
+            - `2016/`: gpx files of vessel tracks for 2016
+            - `2017/`: gpx files of vessel tracks for 2017
+            - `2018/`: gpx files of vessel tracks for 2018
+          - `Whale_Clusters/`: whale clusters data files
+        - `Whaleclusters_vesseltracks/`: folder that holds images used in the appendix
+          - `Vessel_Tracks/`: vessel tracks csv files
+          - `Whale_Clusters/`: whale clusters data files
+  - `Deliverables/`: final deliverables for WorthWhale report, presentation, poster, brief
+    - `EconomicValuationSpreadSheet/`: excel file of final economic model spreadsheet
+    - `FinalPresentation/`: final presentation PDF and video recording
+    - `FinalReport/`: final report PDF, figures, and appendix files
+      - `Appendix/`: folders containing appendix figures and data
+        - `AppendixA/`: economic valuation supplementary materials
+          - `AppendixA1/`: survey questions PDF
+          - `AppendixA2/`: economic model spreadsheet excel file
+          - `AppendixA3/`: 
+        - `AppendixB/`: GPX to csv model
+          - `AppendixB1/`: PNG of screenshot of code to change gpx to csv
+          - `AppendixB2/`: 
+          - `AppendixB3/`: 
+        - `AppendixC/`: whale presence flow chart
+          - `AppendixC1/`: 
+          - `AppendixC2/`: PDF of AIS code
+        - `AppendixD/`: MaxEnt methodology
+          - `AppendixD1/`: 
+          - `AppendixD2/`: 
+        - `AppendixE/`: screenshot PNG of SQL query code
+          - `AppendixE1/`: 
+          - `AppendixE2/`: 
+        - `AppendixF/`: vessel time cost analysis
+          - `AppendixF1/`: 
+          - `AppendixF2/`: screenshot of code and final chart
+        - `AppendixG`/: ShinyApp code
+      - `Final_Report_Figures/`: PNG of all figures and docx of formulas used in report
+    - `ProjectBrief`/: PDF of project brief
+    - `ProjectPoster/`: PDF of project poster
+
