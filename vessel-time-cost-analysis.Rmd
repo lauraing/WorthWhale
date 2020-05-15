@@ -1,0 +1,104 @@
+---
+title: "Vessel Time Cost Analysis"
+author: "WorthWhale Team"
+date: "2/28/2020"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+The following code quantifies the time cost to vessels traveling through the proposed vessel speed reduction zone.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, warning=FALSE, message=FALSE}
+
+# Load necessary packages
+library(tidyverse)
+library(DBI) # DBI stands for "database interface" and creates a connection between R and other database management systems
+library(sf)
+library(lubridate)
+
+```
+
+```{r slowzone}
+
+# Read in slow speed zone shapefile and reproject to WGS84
+slowzone <- sf::read_sf("vessel-time-cost-analysis/data/slowspeedzone.shp") %>% 
+  st_transform(crs = 4326)
+
+# Plot slow speed zone shapefile
+plot(slowzone)
+
+```
+
+```{r SQLite}
+
+# Connect to our worthwhale.sqlite database
+sqlite_con <- dbConnect(RSQLite::SQLite(), "worthwhale.sqlite")
+
+# Get a list of all tables
+alltables = dbListTables(sqlite_con)
+
+# Get the fast_vessels table as a data.frame
+fast_vessels = dbGetQuery(sqlite_con, 'SELECT * FROM fast_vessels')
+
+```
+
+```{r timecostanalysis, warning=FALSE, message=FALSE}
+
+# Create a difference in seconds, minutes, and hours columns
+diff_time <- fast_vessels %>%
+  group_by(mmsi) %>%
+  mutate(diff_in_sec = as.POSIXct(timestamp, format = "%Y-%m-%d %H:%M:%S") - lag(as.POSIXct(timestamp, format = "%Y-%m-%d %H:%M:%S"), default = first(as.POSIXct(timestamp, format = "%Y-%m-%d %H:%M:%S")))) %>%
+  mutate(diff_in_min = as.numeric(diff_in_sec/60)) %>%
+  mutate(diff_in_hr = as.numeric(diff_in_min/60)) %>% 
+  mutate(year = year(timestamp))
+
+# Create master dataframe
+diff_filtered <- diff_time %>%
+  filter(diff_in_min > 0 & diff_in_min < 20, category != "passenger") %>% 
+  mutate(diff_speed = speed-10) %>% 
+  mutate(diff_dist = diff_speed * diff_in_hr) %>% 
+  mutate(diff_time = diff_dist/diff_speed) %>% 
+  select(mmsi, year, speed, diff_speed, lon, lat, category, diff_in_hr, diff_dist, diff_time)
+
+# Only include vessels within the speed reduction zone polygon
+point <- st_as_sf(diff_filtered, coords = c("lon", "lat"), crs = 4326)
+
+# Intersect slowzone and point 
+inzone = st_intersection(point, slowzone) %>%
+  select(-Name)
+ 
+# Create df of total extra time spent in slow speed zone over all vessels from "fast_vessels" table
+time_sum_all <- inzone %>%
+  group_by(year) %>%
+  summarize(year_total = sum(diff_time))
+
+# Create df of total extra time spent in slow speed zone split between merchant, cruise ship, and high speed ferry vessel categories
+time_sum_category <- inzone %>%
+  group_by(year, category) %>%
+  summarize(year_total = sum(diff_time))
+
+# Create vector for 3 vessel categories
+vessel_categories <- c("Cruise Ship", "High Speed Ferry", "Merchant")
+names(vessel_categories) <- c("cruiseship", "high_speed_ferry", "merchant")
+
+# Visualize total time cost per vessel category
+time_cost_plot <- ggplot(time_sum_category, aes(x = year, y = year_total, fill = category)) +
+  geom_bar(stat = "identity", alpha = 0.9) +
+  facet_wrap(~category, scales = "free_y", labeller = labeller(category = vessel_categories)) +
+  scale_y_continuous(expand = expand_scale(mult = c(0,0.05))) +
+  theme_bw()+
+  theme(legend.position = "none", plot.title = element_text(hjust = 0.5)) +
+  scale_fill_brewer(palette="Dark2") +
+  labs(title = "Time Cost for Vessels in 10 knot Vessel Speed Reduction Zone",
+       x = "Year",
+       y = "Total Time Cost (hours)")
+
+time_cost_plot
+
+```

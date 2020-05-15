@@ -1,0 +1,115 @@
+---
+title: "Vessel Tracks + Whale Clusters"
+author: "WorthWhale Team"
+date: "11/16/2019"
+output: html_document
+---
+&nbsp;
+  
+**Goal: Match up the photo timestamps from whale sightings data with research vessel GPS coordinates in order to assign coordinates to the whale sightings.**  
+
+&nbsp;
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, include=FALSE}
+
+# Load packages
+library(tidyverse)
+library(lubridate)
+library(fs)
+library(DBI) # DBI stands for "database interface" and creates a connection between R and other database management systems
+library(qdap)
+
+```
+
+
+Combine whale sightings data with vessel track location data from 2005-2018:
+
+```{r load/wrangle cluster data, message=FALSE}
+
+# Create clusters tibble
+clusters <- tibble(cluster = integer(), 
+                   males = numeric(),
+                   adults = character(),
+                   calves = character(),
+                   total = numeric(),
+                   datetime = character(), 
+                   lat = numeric(), 
+                   lon = numeric()
+              )
+
+# Read in whale clusters data
+cluster_files <- dir_ls(path = "whaleclusters_vesseltracks/data/whale_clusters", glob = "*.csv")
+
+# Loop to wrangle clusters data
+for (cluster_file in cluster_files) {
+  chunk <- read_csv(cluster_file)
+  names(chunk) <- tolower(names(chunk))
+  chunk$adults <- multigsub(c("?"), c(""), chunk$adults)
+  chunk$calves <- multigsub(c("?"), c(""), chunk$calves)
+  chunk$datetime <- paste(chunk$date, "", chunk$truetime)
+  chunk$datetime <- format(parse_date_time(chunk$datetime, "%d/%m/%Y %H:%M:%S", tz = "America/Dominica"))
+  chunk <- rename(chunk, lon = long)
+  chunk <- subset(chunk, select = c(cluster, males, adults, calves, total, datetime, lat, lon))
+  clusters <- bind_rows(clusters, chunk) 
+}
+
+clusters$datetime <- parse_date_time(clusters$datetime, "%Y-%m-%d %H:%M:%S")
+clusters$adults <- as.numeric(clusters$adults)
+clusters$calves <- as.numeric(clusters$calves)
+
+```
+
+
+```{r load/wrangle vessel tracks data, message=FALSE, warning=FALSE}
+
+# Create vessel tracks tibble
+vessel_tracks <- tibble(time = character(), 
+              lat = numeric(), 
+              lon = numeric()
+)
+
+# Read in vessel tracks data
+vessel_tracks_files <- dir_ls(path = "whaleclusters_vesseltracks/data/vessel_tracks", glob = "*.csv")
+
+# Loop to wrangle vessel tracks data
+for (vessel_tracks_file in vessel_tracks_files) {
+  chunk <- read_csv(vessel_tracks_file)
+  names(chunk) <- tolower(names(chunk))
+  chunk <- rename_all(chunk, recode, long = "lon")
+  chunk$time <- format(parse_date_time(chunk$time, c("%d/%m/%Y %H:%M:%S", "%Y-%m-%d %H:%M:%S", "%b/%d/%Y %H:%M:%S"), tz = "America/Dominica"))
+  vessel_tracks <- bind_rows(vessel_tracks, chunk) 
+}
+
+vessel_tracks <- rename(vessel_tracks, datetime = time)
+vessel_tracks$datetime <- parse_date_time(vessel_tracks$datetime, "%Y-%m-%d %H:%M:%S")
+
+```
+
+
+```{r match times, message=FALSE}
+
+# Matching times photo was taken of whale sighting with closest GPS time stamp of vessel track
+closest <- sapply(seq(nrow(clusters)), function(i) {which.min(abs(clusters$datetime[i] - vessel_tracks$datetime))})
+clusters$lat <- vessel_tracks$lat[closest]
+clusters$lon <- vessel_tracks$lon[closest]
+
+```
+
+Insert whale sighting clusters data with matched timestamps as "sightings" table to WorthWhale SQLite database:
+
+```{r insert to database, message=FALSE}
+
+# Inserting to SQLite database
+clusters$datetime <- format(clusters$datetime)
+sqlite_db_filename <- "worthwhale.sqlite" 
+sqlite_db <- dbConnect(RSQLite::SQLite(), sqlite_db_filename) 
+dbWriteTable(sqlite_db, name = "sightings", value = clusters, overwrite = TRUE, field.types=c(cluster="int"))
+
+# Write sightings data to a csv
+write.csv(clusters,"whaleclusters_vesseltracks/output/sightings.csv")
+
+```
